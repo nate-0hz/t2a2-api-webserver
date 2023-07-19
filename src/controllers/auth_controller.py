@@ -1,6 +1,7 @@
 from flask import Blueprint, request
 from init import db, bcrypt
 from models.user import User, user_schema
+from flask_jwt_extended import create_access_token
 from sqlalchemy.exc import IntegrityError
 from psycopg2 import errorcodes
 from datetime import timedelta
@@ -51,7 +52,7 @@ def auth_login():
     # check if user exists and password is correct
     if user and (user.is_crud_access == True) and bcrypt.check_password_hash(user.password, body_data.get('password')):
         token = create_access_token(identity=str(user.id))
-        return { 'email': user.email, 'token': token, 'is_crud_access': user.is_crud_admin, 'is_crud_admin': user.is_crud_admin }
+        return { 'email': user.email, 'token': token, 'is_crud_access': user.is_crud_access, 'is_crud_admin': user.is_crud_admin }
     # if user does not have crud_access flag
     elif user and (user.is_crud_access == False) and bcrypt.check_password_hash(user.password, body_data.get('password')):
         return { 'error': f'{user.email} does not have application access.'}, 403
