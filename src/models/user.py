@@ -25,7 +25,7 @@ class UserSchema(ma.Schema):
     allocation = fields.List(fields.Nested('AllocationSchema', exclude=['license_valid_to']))
 
     class Meta:
-        fields = ('name', 'email', 'password', 'is_position_level', 'is_crud_access', 'is_crud_admin', 'employment_start_date', 'employment_end_date')
+        fields = ('id', 'name', 'email', 'password', 'is_position_level', 'is_crud_access', 'is_crud_admin', 'employment_start_date', 'employment_end_date')
 
 user_schema = UserSchema()
 users_schema = UserSchema(many=True)

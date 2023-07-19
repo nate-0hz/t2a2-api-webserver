@@ -1,6 +1,7 @@
 from flask import Blueprint
 from init import db, bcrypt
 from models.user import User
+from models.application import Application
 from datetime import date
 
 db_commands = Blueprint('db', __name__)
@@ -55,8 +56,28 @@ def seed_db():
             employment_start_date='13/01/1990'
         ),
     ]
-    print('Tables seeded.')
-
     db.session.add_all(users)
+    print('User table seeded.')
 
+    applications = [
+        Application(
+            name="Microsoft M365",
+            description="Microsoft M365 platform",
+            isActive=True
+        ),
+        Application(
+            name="Microsoft Visio",
+            description="Microsoft Flowchat and diagram application",
+            isActive=False
+        ),
+        Application(
+            name="CyberArk",
+            description="Credential vault for enterprise application.",
+            isActive=True
+        )
+    ]
+    db.session.add_all(applications)
+    print('Application table seeded.')
+    
     db.session.commit()
+    print('Data committed to database.')
