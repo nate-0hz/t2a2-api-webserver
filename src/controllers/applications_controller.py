@@ -4,7 +4,7 @@ from flask_jwt_extended import get_jwt_identity, jwt_required
 from models.application import Application, applications_schema, application_schema
 
 # Creating application Blueprint
-application_bp = Blueprint('applications', __name__, url_prefix='/applications')
+application_bp = Blueprint('applications', __name__, url_prefix='/application')
 
 
 ### TODO Add decorator to auth as admin
@@ -14,7 +14,7 @@ application_bp = Blueprint('applications', __name__, url_prefix='/applications')
 @application_bp.route('/', methods=['GET'])
 ## TODO @jwt_required()
 def get_all_apps():
-    stmt = db.Select(Application).order_by(Application.name.desc())
+    stmt = db.Select(Application).order_by(Application.id.desc())
     applications = db.session.scalars(stmt)
     return applications_schema.dump(applications)
 
@@ -39,7 +39,7 @@ def add_app():
 
 
 # Endpoint: edit app
-@application_bp.route('/<int:id>', methods=['PUT', 'PATCH']) ## TODO: FIX THIS - DOES NOT OVERWRITE VALUE
+@application_bp.route('/<int:id>', methods=['PUT', 'PATCH']) ## TODO: FIX THIS - DOES NOT OVERWRITE
 ## TODO @jwt_required()
 ## Add admin required check
 def update_single_app(id):

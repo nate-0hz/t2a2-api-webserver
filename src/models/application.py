@@ -11,10 +11,14 @@ class Application(db.Model):
     isActive = db.Column(db.Boolean, default=True)
 
 
+    # at the model level
+    licenses = db.relationship('License', back_populates='application', cascade='all, delete')
+
+
 class ApplicationSchema(ma.Schema):
-    
+    licenses = fields.List(fields.Nested('LicenseSchema', exclude=['application']))
     class Meta:
-        fields = ('id', 'name', 'description', 'isActive')
+        fields = ('id', 'name', 'description', 'isActive', 'licenses')
 
 application_schema = ApplicationSchema()
 applications_schema = ApplicationSchema(many=True)

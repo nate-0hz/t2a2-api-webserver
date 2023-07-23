@@ -5,6 +5,7 @@ from init import db, ma, bcrypt, jwt
 from controllers.auth_controller import auth_bp
 from controllers.cli_controller import db_commands
 from controllers.applications_controller import application_bp
+from controllers.license_controller import license_bp
 from marshmallow.exceptions import ValidationError
 
 
@@ -32,9 +33,11 @@ def create_app():
     bcrypt.init_app(app)
     jwt.init_app(app)
 
-    ## Todo: Register blueprints here
+    ## Blueprints registered here
     app.register_blueprint(auth_bp)
     app.register_blueprint(db_commands)
     app.register_blueprint(application_bp)
+    app.register_blueprint(license_bp)
+
 
     return app

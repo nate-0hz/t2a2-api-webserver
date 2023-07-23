@@ -2,6 +2,7 @@ from flask import Blueprint
 from init import db, bcrypt
 from models.user import User
 from models.application import Application
+from models.license import License
 from datetime import date
 
 db_commands = Blueprint('db', __name__)
@@ -57,27 +58,48 @@ def seed_db():
         ),
     ]
     db.session.add_all(users)
-    print('User table seeded.')
+    print('Users table seeded.')
 
     applications = [
         Application(
             name="Microsoft M365",
             description="Microsoft M365 platform",
             isActive=True
-        ),
-        Application(
-            name="Microsoft Visio",
-            description="Microsoft Flowchat and diagram application",
-            isActive=False
-        ),
-        Application(
-            name="CyberArk",
-            description="Credential vault for enterprise application.",
-            isActive=True
         )
     ]
     db.session.add_all(applications)
-    print('Application table seeded.')
+    print('Applications table seeded.')
+
+    licenses = [
+        License(
+            name="M365-F3",
+            description="Microsoft M365 F3 license",
+            is_position_level_restricted = False,
+            application_id=1,
+            monthly_cost=9.95,
+            total_purchased=10
+        ),
+        License(
+            name="M365-E3",
+            description="Microsoft M365 E3 license",
+            is_position_level_restricted=False,
+            application_id=1,
+            monthly_cost=25.95,
+            total_purchased=50
+        ),
+        License(
+            name="M365-E5",
+            description="Microsoft M365 E5 license",
+            is_position_level_restricted=True,
+            application_id=1,
+            monthly_cost=34.95,
+            total_purchased=15
+        )
+    ]
+
+    db.session.add_all(licenses)
+    print('Licenses table seeded.')
     
+
     db.session.commit()
     print('Data committed to database.')
