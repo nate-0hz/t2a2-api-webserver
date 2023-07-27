@@ -19,10 +19,11 @@ class License(db.Model):
     allocation = db.relationship('Allocation', back_populates='license', cascade='all, delete')
 
 class LicenseSchema(ma.Schema):
-    application = fields.Nested('ApplicationSchema', exclude=['licenses'])
+    application = fields.Nested('ApplicationSchema', only=['name'])
+    application_id = fields.Int()
     
     class Meta:
-        fields = ('id', 'name', 'description', 'is_position_level_restricted', 'monthly_cost', 'application', 'total_purchased')
+        fields = ('id', 'name', 'description', 'is_position_level_restricted', 'monthly_cost', 'application', 'application_id', 'total_purchased')
 
 license_schema = LicenseSchema()
 licenses_schema = LicenseSchema(many=True)

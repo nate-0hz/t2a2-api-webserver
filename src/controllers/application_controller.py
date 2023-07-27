@@ -51,7 +51,7 @@ def add_app():
 # Endpoint: edit an app
 @application_bp.route('/<int:id>', methods=['PUT', 'PATCH'])
 @jwt_required()
-## Add admin required check
+## TODO Add authorise as admin
 def update_single_app(id):
     body_data = application_schema.load(request.get_json(), partial=True)
     ## TODO add jwt for admin check
@@ -66,7 +66,7 @@ def update_single_app(id):
         db.session.commit()
         return application_schema.dump(application)
     else:
-        return { 'error': f'Application not found with id {id}.'}, 404
+        return {'error': f'Application not found with id {id}.'}, 404
     
 
 # Endpoint: Delete an app
@@ -79,7 +79,7 @@ def delete_application(id):
     if application:
         db.session.delete(application)
         db.session.commit()
-        return { 'message': f'Application id:{application.id} name:{application.name} deleted successfully.'}
+        return {'message': f'Application id:{application.id} name:"{application.name}" deleted successfully.'}
     else:
-        return { 'error': f'Application not found with id {id}.'}, 404
+        return {'error': f'Application not found with id {id}.'}, 404
     
