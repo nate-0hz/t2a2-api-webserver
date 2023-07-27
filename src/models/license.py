@@ -12,16 +12,17 @@ class License(db.Model):
     monthly_cost = db.Column(db.Numeric(precision=6, scale=2), nullable=False)
     total_purchased = db.Column(db.Integer)
 
-    application_id = db.Column(db.Integer, db.ForeignKey('applications.id')) # TODO needs not null
+    application_id = db.Column(db.Integer, db.ForeignKey('applications.id'), nullable=False)
 
     # at model level
     application = db.relationship('Application', back_populates='licenses')
+    # allocation = db.relationship('Allocation', back_populates='licenses', cascade='all, delete')
 
 class LicenseSchema(ma.Schema):
     application = fields.Nested('ApplicationSchema', exclude=['licenses'])
     
     class Meta:
-        fields = ('id', 'name', 'description', 'is_position_level_restricted', 'monthly_cost', 'application', 'total_purchased')
+        fields = ('id', 'name', 'description', 'is_position_level_restricted', 'monthly_cost', 'application', 'total_purchased', 'allocation')
 
 license_schema = LicenseSchema()
 licenses_schema = LicenseSchema(many=True)

@@ -19,13 +19,13 @@ class User(db.Model):
     # at db level
 
     # at model level    
-    # move employment end date here?
+    # allocation = db.relationship('Allocation', back_populates='users')
 
 class UserSchema(ma.Schema):
-    allocation = fields.List(fields.Nested('AllocationSchema', exclude=['license_valid_to']))
+    # allocation = fields.List(fields.Nested('AllocationSchema', exclude=['users']))
 
     class Meta:
-        fields = ('id', 'name', 'email', 'password', 'is_position_level', 'is_crud_access', 'is_crud_admin', 'employment_start_date', 'employment_end_date')
+        fields = ('id', 'name', 'email', 'is_position_level', 'is_crud_access', 'is_crud_admin', 'employment_start_date', 'employment_end_date')
 
 user_schema = UserSchema()
 users_schema = UserSchema(many=True)

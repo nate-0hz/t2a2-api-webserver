@@ -3,6 +3,7 @@ from init import db, bcrypt
 from models.user import User
 from models.application import Application
 from models.license import License
+# from models.allocation import Allocation
 from datetime import date
 
 db_commands = Blueprint('db', __name__)
@@ -36,7 +37,8 @@ def seed_db():
             is_position_level=True,
             is_crud_access=True,
             is_crud_admin=False,
-            employment_start_date='13/01/2001'
+            employment_start_date='13/01/2001',
+            employment_end_date='31/12/2999'
         ),
         User(
             name="Seed3 Admin",
@@ -45,7 +47,8 @@ def seed_db():
             is_position_level=True,
             is_crud_access=False,
             is_crud_admin=False,
-            employment_start_date='13/01/1990'
+            employment_start_date='13/01/1990',
+            employment_end_date='31/12/2999'
         ),
         User(
             name="Seed4 Admin",
@@ -54,7 +57,8 @@ def seed_db():
             is_position_level=False,
             is_crud_access=False,
             is_crud_admin=False,
-            employment_start_date='13/01/1990'
+            employment_start_date='13/01/1990',
+            employment_end_date='31/12/2999'
         ),
     ]
     db.session.add_all(users)
@@ -96,10 +100,18 @@ def seed_db():
             total_purchased=15
         )
     ]
-
     db.session.add_all(licenses)
     print('Licenses table seeded.')
-    
+
+    # allocations = [
+    #     Allocation(
+    #         license_id=1,
+    #         user_id=1
+    #     )
+    # ]
+
+    # db.session.add_all(allocations)
+    # print('allocations table seeded')
 
     db.session.commit()
     print('Data committed to database.')
