@@ -25,17 +25,27 @@ def get_single_user_allocation(id):
     try:
         user = User.query.get(id)
         stmt = db.Select(Allocation).filter_by(user_id=id)
-        allocation = db.session.scalars(stmt)
-        if not allocation:
+        allocations = db.session.scalars(stmt)
+
+        if not allocations:
             return {'error': f'No license allocations found for user with id {id}'}, 404
         else:
-            allocation_dict = [{'license_id': allocation.license_id, 
-                                'license_name': allocation.license.name, 
-                                'monthly_cost': allocation.license.monthly_cost} for allocation in allocation]
+            allocation_dict = []
+            total_monthly_cost = 0
+            for allocation in allocations:
+                license = allocation.license
+                allocation_dict.append({
+                    'license_id': allocation.license_id,
+                    'license_name': license.name,
+                    'monthly_cost': license.monthly_cost
+                })
+                total_monthly_cost =+ license.monthly_cost
             return {
                 'user_id': user.id,
                 'user_name': user.name,
-                'licenses': allocation_dict}
+                'licenses': allocation_dict,
+                'total_monthly_cost': total_monthly_cost
+            }
     except:
         return {'error': f'No user found with id {id}'}, 404
 
