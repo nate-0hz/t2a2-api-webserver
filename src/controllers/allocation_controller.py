@@ -1,6 +1,6 @@
 from flask import Blueprint, request
 from init import db
-from flask_jwt_extended import get_jwt_identity, jwt_required
+from flask_jwt_extended import jwt_required
 from models.allocation import Allocation, allocation_schema, allocations_schema
 
 # Create allocation Blueprint
@@ -10,7 +10,7 @@ allocation_bp = Blueprint('allocation', __name__, url_prefix='/allocation')
 
 # Endpoint: get all allocations
 @allocation_bp.route('/', methods=['GET'])
-## TODO jwt_required()
+@jwt_required()
 def get_all_allocations():
     stmt = db.Select(Allocation).order_by(Allocation.id.desc())
     allocations = db.session.scalars(stmt)

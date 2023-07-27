@@ -3,11 +3,12 @@ from flask import Flask
 from init import db, ma, bcrypt, jwt
 from controllers.auth_controller import auth_bp
 from controllers.cli_controller import db_commands
-from controllers.applications_controller import application_bp
+from controllers.application_controller import application_bp
 from controllers.license_controller import license_bp
 from controllers.allocation_controller import allocation_bp
 from controllers.user_controller import user_bp
 from marshmallow.exceptions import ValidationError
+from datetime import timedelta
 
 
 def create_app():
@@ -15,6 +16,7 @@ def create_app():
 
     app.config['SQLALCHEMY_DATABASE_URI']=os.environ.get('DATABASE_URL')
     app.config['JWT_SECRET_KEY']=os.environ.get('JWT_SECRET_KEY')
+    app.config['JWT_ACCESS_TOKEN_EXPIRES']=timedelta(hours=24)
 
     @app.errorhandler(ValidationError)
     def validation_error(err):
