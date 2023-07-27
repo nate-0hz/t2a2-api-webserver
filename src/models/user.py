@@ -19,10 +19,10 @@ class User(db.Model):
     # at db level
 
     # at model level    
-    # allocation = db.relationship('Allocation', back_populates='users')
+    allocation = db.relationship('Allocation', back_populates='user')
 
 class UserSchema(ma.Schema):
-    # allocation = fields.List(fields.Nested('AllocationSchema', exclude=['users']))
+    allocation = fields.List(fields.Nested('AllocationSchema', exclude=['users']))
 
     class Meta:
         fields = ('id', 'name', 'email', 'is_position_level', 'is_crud_access', 'is_crud_admin', 'employment_start_date', 'employment_end_date')
