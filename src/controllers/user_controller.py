@@ -12,6 +12,7 @@ user_bp = Blueprint('user', __name__, url_prefix='/user')
 @jwt_required()
 @authorise_as_access
 def get_all_users():
+    # Queries the database and retreives all user details
     stmt = db.Select(User).order_by(User.id.desc())
     users = db.session.scalars(stmt)
     return users_schema.dump(users)
@@ -22,9 +23,11 @@ def get_all_users():
 @jwt_required()
 @authorise_as_access
 def get_single_user(id):
+    # Queries the database and retrieves the details of the user matching the user_id
     stmt = db.Select(User).filter_by(id=id)
     user = db.session.scalar(stmt)
     if user:
+        # Where the user exists, returns a dictionary of all users
         return user_schema.dump(user)
     else:
         return {'error': f'User with id {id} not found.'}, 404

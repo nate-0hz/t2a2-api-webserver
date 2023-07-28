@@ -16,6 +16,7 @@ license_bp = Blueprint('license', __name__, url_prefix='/license')
 @jwt_required()
 @authorise_as_access
 def get_all_apps():
+    # Queries database for a list of license types and returns a list of dictionaries of license types
     stmt = db.Select(License).order_by(License.name.desc())
     licenses = db.session.scalars(stmt)
     return licenses_schema.dump(licenses)
@@ -26,6 +27,7 @@ def get_all_apps():
 @jwt_required()
 @authorise_as_access
 def get_single_license(id):
+    # Queries database for a list of license types and returns in dictionary with license type and the application the license is associated with
     stmt = db.Select(License).filter_by(id=id)
     license = db.session.scalar(stmt)
     if license:
@@ -39,9 +41,11 @@ def get_single_license(id):
 @jwt_required()
 @authorise_as_admin
 def delete_one_app(id):
+    # Queries the database for the specified license_id, returning the license attributes in a scalar
     stmt = db.select(License).filter_by(id=id)
     license = db.session.scalar(stmt)
     if license:
+        # deletes the specified license and commits the change to the database
         db.session.delete(license)
         db.session.commit()
         return {'message': f'License id: {license.id} with name: "{license.name}" deleted successfully.'}
@@ -56,10 +60,11 @@ def delete_one_app(id):
 def add_license():
     body_data = license_schema.load(request.get_json())
 
-    # Check if the provided application exists
+    # Validates if the provided application exists for the license to be assigned to it
     application_id = body_data.get('application_id')
     application = Application.query.get(application_id)
     if not application:
+        # Prevents a licnese being assigned to a non-existant application
         return {'error': f'Application not found with id {application_id}'}, 404
 
     license = License(
@@ -70,9 +75,8 @@ def add_license():
         total_purchased=body_data.get('total_purchased'),
         application=application
     )
-
+    # adds and commits the new licenses to the database and returns the details for user confirmation
     db.session.add(license)
     db.session.commit()
-
     return license_schema.dump(license), 201
 
