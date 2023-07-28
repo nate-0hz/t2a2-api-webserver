@@ -31,3 +31,11 @@ def get_single_user(id):
         return user_schema.dump(user)
     else:
         return {'error': f'User with id {id} not found.'}, 404
+    
+# Endpoint to delete a single user - CRUD access restricted
+@user_bp.route('<int:id>', methods=['DELETE'])
+@jwt_required()
+@authorise_as_access
+def delete_user():
+    # Queries the database and retreives user details
+    pass

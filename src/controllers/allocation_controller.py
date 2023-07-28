@@ -1,10 +1,12 @@
-from flask import Blueprint
+from flask import Blueprint, request
 from init import db
 from flask_jwt_extended import jwt_required
-from models.allocation import Allocation, allocations_schema
+from models.allocation import Allocation, allocations_schema, allocation_schema
 from models.user import User
 from models.license import License
 from controllers.auth_controller import authorise_as_access
+from sqlalchemy.exc import IntegrityError
+from psycopg2 import errorcodes
 
 # Create allocation Blueprint
 allocation_bp = Blueprint('allocation', __name__, url_prefix='/allocation')
@@ -99,3 +101,55 @@ def get_single_license_allocation(id):
     except:
         # Where no license is found with the id specified, the error is handled with useful information
         return {'error': f'No license found with id {id}'}, 404
+
+
+# Endpoint: add license allocation for user and licnese type
+@allocation_bp.route('/new', methods=['POST'])
+@jwt_required()
+@authorise_as_access
+def new_license_allocation():
+    try:
+        body_data = allocation_schema.load(request.get_json())
+
+        # Checks if license_id and user_id combination exists in allocations table
+        existing_allocation = Allocation.query.filter_by(
+            license_id=body_data.get('license_id'),
+            user_id=body_data.get('user_id')
+            ).first()
+
+        # If allocation exists, prevents duplicate assignment of licnese
+        if existing_allocation:
+            return {'error': f'License ID {body_data.get("license_id")} has already been assigned to User ID {body_data.get("user_id")}.'}
+
+        # Otherwise, allocates the license and commits to the database, returning confirmation for the user.
+        allocation = Allocation(
+            license_id = body_data.get('license_id'),
+            user_id = body_data.get('user_id'),
+        )
+
+        db.session.add(allocation)
+        db.session.commit()
+
+        return allocation_schema.dump(allocation), 201
+
+    except IntegrityError as err:
+        # handles error if not nullable field is null
+        if err.orig.pgcode == errorcodes.NOT_NULL_VIOLATION:
+            db.session.rollback()
+            column_name = err.orig.diag.column_name
+            return { 'error': f'Unable to add allocation - {column_name} is required' }, 409
+
+@allocation_bp.route('/<int:id>', methods=['DELETE'])
+@jwt_required()
+@authorise_as_access
+def delete_license_allocation(id):
+    stmt = db.select(Allocation).filter_by(id=id)
+    allocation = db.session.scalar(stmt)
+
+    if not allocation:
+        db.session.rollback()
+        return {'error': f'Allocation not found with id {id}.'}, 404
+    else:
+        db.session.delete(allocation)
+        db.session.commit()
+        return {'message': f'Allocation with id {id} for license id {allocation.license_id} for user id {allocation.user_id} deleted successfully .'}
