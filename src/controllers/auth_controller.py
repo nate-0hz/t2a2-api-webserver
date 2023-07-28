@@ -1,14 +1,47 @@
 from flask import Blueprint, request
 from init import db, bcrypt
 from models.user import User, user_schema
-from flask_jwt_extended import create_access_token
+from flask_jwt_extended import get_jwt_identity, create_access_token, jwt_required
 from sqlalchemy.exc import IntegrityError
 from psycopg2 import errorcodes
-from datetime import timedelta
+import functools
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 
+# Function to authorise admin
+def authorise_as_admin(fn):
+    @functools.wraps(fn)
+    def wrapper(*args, **kwargs):
+        user_id = get_jwt_identity()
+        stmt = db.select(User).filter_by(id=user_id)
+        user = db.session.scalar(stmt)
+        if user.is_crud_admin:
+            return fn(*args, **kwargs)
+        else:
+            return {'error': 'Without Admin credentials, you are authorised to perform that activity.'}, 403
+
+    return wrapper
+
+
+# Function to authorise with CRUD application access
+def authorise_as_access(fn):
+    @functools.wraps(fn)
+    def wrapper(*args, **kwargs):
+        user_id = get_jwt_identity()
+        stmt = db.select(User).filter_by(id=user_id)
+        user = db.session.scalar(stmt)
+        if user.is_crud_access:
+            return fn(*args, **kwargs)
+        else:
+            return {'error': 'Without application credentials, you are unauthorised to perform that activity.'}, 403
+
+    return wrapper
+
+
+# Endpoint to register new account - CRUD application access restricted
 @auth_bp.route('/register', methods=['POST'])
+@jwt_required()
+@authorise_as_access
 def auth_register():
     try:
         # requires "name": , "email": , "password":, "employment_start_date":, "is_position_level": (default False), "is_crud_access": (default Flase), "is_crud_admin": (default False),

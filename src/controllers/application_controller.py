@@ -2,15 +2,14 @@ from flask import Blueprint, request
 from init import db
 from flask_jwt_extended import jwt_required
 from models.application import Application, applications_schema, application_schema
+from controllers.auth_controller import authorise_as_admin
+
 
 # Creating application Blueprint
 application_bp = Blueprint('application', __name__, url_prefix='/application')
 
 
-### TODO Add decorator to auth as admin
-
-
-# Endpoint: get all apps
+# Endpoint: get all apps - any registered user can access
 @application_bp.route('/', methods=['GET'])
 @jwt_required()
 def get_all_apps():
@@ -19,7 +18,7 @@ def get_all_apps():
     return applications_schema.dump(applications)
 
 
-# Endpoint: get single app with ID
+# Endpoint: get single app with ID - any registered user can access
 @application_bp.route('/<int:id>', methods=['GET'])
 @jwt_required()
 def get_single_app(id):
@@ -31,9 +30,10 @@ def get_single_app(id):
         return {'error': f'Application not found with id {id}'}, 404
     
 
-# Endpoint: add new app
+# Endpoint: add new app - admin restricted
 @application_bp.route('/new', methods=['POST'])
 @jwt_required()
+@authorise_as_admin
 def add_app():
     body_data = application_schema.load(request.get_json())
 
@@ -48,9 +48,10 @@ def add_app():
     return application_schema.dump(application), 201
 
 
-# Endpoint: edit an app
+# Endpoint: edit an app - admin restricted
 @application_bp.route('/<int:id>', methods=['PUT', 'PATCH'])
 @jwt_required()
+@authorise_as_admin
 ## TODO Add authorise as admin
 def update_single_app(id):
     body_data = application_schema.load(request.get_json(), partial=True)
@@ -69,9 +70,10 @@ def update_single_app(id):
         return {'error': f'Application not found with id {id}.'}, 404
     
 
-# Endpoint: Delete an app
+# Endpoint: Delete an app - admin restricted
 @application_bp.route('/<int:id>', methods=['DELETE'])
 @jwt_required()
+@authorise_as_admin
 ## TODO ADD authorise as admin
 def delete_application(id):
     stmt = db.select(Application).filter_by(id=id)

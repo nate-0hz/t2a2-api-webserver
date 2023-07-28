@@ -3,6 +3,7 @@ from init import db
 from flask_jwt_extended import jwt_required
 from models.license import License, licenses_schema, license_schema
 from models.application import Application
+from controllers.auth_controller import authorise_as_admin, authorise_as_access
 
 
 # Create license Blueprint
@@ -10,31 +11,33 @@ license_bp = Blueprint('license', __name__, url_prefix='/license')
 
 ### TODO Add decorator auth as admin
 
-# Endpoint: get all licenses
+# Endpoint: get all licenses - CRUD access restricted
 @license_bp.route('/', methods=['GET'])
 @jwt_required()
+@authorise_as_access
 def get_all_apps():
     stmt = db.Select(License).order_by(License.name.desc())
     licenses = db.session.scalars(stmt)
     return licenses_schema.dump(licenses)
 
 
-# Endpoint: get one license
+# Endpoint: get one license - CRUD access restricted
 @license_bp.route('/<int:id>', methods=['GET'])
 @jwt_required()
+@authorise_as_access
 def get_single_license(id):
     stmt = db.Select(License).filter_by(id=id)
     license = db.session.scalar(stmt)
     if license:
         return license_schema.dump(license)
     else:
-        return {'error': f'License not found with id {id}'}, 404
+        return {'error': f'License with id {id} not found.'}, 404
     
 
-# Endpoint: delete license
+# Endpoint: delete license type - admin resticted
 @license_bp.route('/<int:id>', methods=['DELETE'])
 @jwt_required()
-## TODO Add authorise as admin
+@authorise_as_admin
 def delete_one_app(id):
     stmt = db.select(License).filter_by(id=id)
     license = db.session.scalar(stmt)
@@ -46,9 +49,10 @@ def delete_one_app(id):
         return {'error': f'License not found with id {id}.'}, 404
 
 
-# Endpoint: add new license
+# Endpoint: add new license type - admin restriced
 @license_bp.route('/new', methods=['POST'])
 @jwt_required()
+@authorise_as_admin
 def add_license():
     body_data = license_schema.load(request.get_json())
 
