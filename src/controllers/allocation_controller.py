@@ -1,4 +1,4 @@
-from flask import Blueprint, request
+from flask import Blueprint
 from init import db
 from flask_jwt_extended import jwt_required
 from models.allocation import Allocation, allocations_schema

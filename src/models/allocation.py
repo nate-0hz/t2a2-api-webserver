@@ -6,6 +6,7 @@ class Allocation(db.Model):
     __tablename__= 'allocations'
 
     id = db.Column(db.Integer, primary_key=True)
+    # FK
     license_id = db.Column(db.Integer, db.ForeignKey('licenses.id'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
    

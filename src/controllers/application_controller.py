@@ -2,7 +2,10 @@ from flask import Blueprint, request
 from init import db
 from flask_jwt_extended import jwt_required
 from models.application import Application, applications_schema, application_schema
+from models.license import License
 from controllers.auth_controller import authorise_as_admin
+from sqlalchemy.exc import IntegrityError
+from psycopg2 import errorcodes
 
 
 # Creating application Blueprint
@@ -24,6 +27,7 @@ def get_all_apps():
 def get_single_app(id):
     stmt = db.Select(Application).filter_by(id=id)
     application = db.session.scalar(stmt)
+    
     if application:
         return application_schema.dump(application)
     else:
@@ -35,34 +39,40 @@ def get_single_app(id):
 @jwt_required()
 @authorise_as_admin
 def add_app():
-    body_data = application_schema.load(request.get_json())
+    try:
+        body_data = application_schema.load(request.get_json())
 
-    application = Application(
-        name = body_data.get('name'),
-        description = body_data.get('description'),
-        isActive = body_data.get('isActive')
-    )
+        application = Application(
+            name = body_data.get('name'),
+            description = body_data.get('description'),
+            isActive = body_data.get('isActive')
+        )
 
-    db.session.add(application)
-    db.session.commit()
-    return application_schema.dump(application), 201
+        db.session.add(application)
+        db.session.commit()
+        return application_schema.dump(application), 201
 
+    except IntegrityError as err:
+        # handles error if not nullable field is null
+        if err.orig.pgcode == errorcodes.NOT_NULL_VIOLATION:
+            db.session.rollback()
+            column_name = err.orig.diag.column_name
+            return { 'error': f'Unable to add application - {column_name} is required' }, 409
 
 # Endpoint: edit an app - admin restricted
 @application_bp.route('/<int:id>', methods=['PUT', 'PATCH'])
 @jwt_required()
 @authorise_as_admin
-## TODO Add authorise as admin
 def update_single_app(id):
     body_data = application_schema.load(request.get_json(), partial=True)
-    ## TODO add jwt for admin check
     stmt = db.select(Application).filter_by(id=id)
     application = db.session.scalar(stmt)
 
     if application:
         application.name = body_data.get('name') or application.name
         application.description = body_data.get('description') or application.description
-        application.isActive = body_data.get('isActive') or application.isActive
+        if body_data.get('isActive') is not None:
+            application.isActive = body_data.get('isActive')
 
         db.session.commit()
         return application_schema.dump(application)
@@ -74,14 +84,19 @@ def update_single_app(id):
 @application_bp.route('/<int:id>', methods=['DELETE'])
 @jwt_required()
 @authorise_as_admin
-## TODO ADD authorise as admin
 def delete_application(id):
     stmt = db.select(Application).filter_by(id=id)
     application = db.session.scalar(stmt)
+
     if application:
-        db.session.delete(application)
-        db.session.commit()
-        return {'message': f'Application id:{application.id} name:"{application.name}" deleted successfully.'}
+        licenses = License.query.filter_by(application_id=id).all()
+        # Validates is license types have been associatesd with application and if so, prevents application removal
+        if licenses:
+            return {'error': f'Cannot delete application \'{application.name}\' with id {id} as license types have been associated with the application. Please remove the license types first.'}
+        else:
+            db.session.delete(application)
+            db.session.commit()
+            return {'message': f'Application \'{application.name}\' with id {id} deleted successfully.'}
     else:
         return {'error': f'Application not found with id {id}.'}, 404
     

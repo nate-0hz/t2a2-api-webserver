@@ -15,8 +15,6 @@ class User(db.Model):
     is_crud_admin = db.Column(db.Boolean, nullable=False, default=False)
     employment_start_date = db.Column(db.DateTime, nullable=False)
     employment_end_date = db.Column(db.DateTime, nullable=True) # TODO back populate LicenseAllocation table
-    
-    # at db level
 
     # at model level    
     allocation = db.relationship('Allocation', back_populates='user')

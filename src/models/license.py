@@ -11,7 +11,7 @@ class License(db.Model):
     is_position_level_restricted = db.Column(db.Boolean, default=False)
     monthly_cost = db.Column(db.Numeric(precision=6, scale=2), nullable=False)
     total_purchased = db.Column(db.Integer)
-
+    # FK
     application_id = db.Column(db.Integer, db.ForeignKey('applications.id'), nullable=False)
 
     # at model level

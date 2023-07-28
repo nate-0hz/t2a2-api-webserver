@@ -72,11 +72,11 @@ def auth_register():
         #handles error is unique field is not unique, ie email address
         if err.orig.pgcode == errorcodes.UNIQUE_VIOLATION:
             return { 'error': 'Email address already in use'}, 409
-        # handles error is not nullable field is null, eg
+        # handles error is not nullable field is null
         if err.orig.pgcode == errorcodes.NOT_NULL_VIOLATION:
             db.session.rollback()
             column_name = err.orig.diag.column_name
-            return { 'error': f'Unable to add user, as {column_name} is required' }, 409
+            return { 'error': f'Unable to add user - {column_name} is required' }, 409
         
 
 # Endpoint to allow login. The WJT bearer token validity is set in .env 

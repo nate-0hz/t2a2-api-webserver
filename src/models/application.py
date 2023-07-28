@@ -10,7 +10,6 @@ class Application(db.Model):
     description = db.Column(db.String)
     isActive = db.Column(db.Boolean, default=True)
 
-
     # at the model level
     licenses = db.relationship('License', back_populates='application', cascade='all, delete')
 
