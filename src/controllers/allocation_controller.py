@@ -149,6 +149,7 @@ def delete_license_allocation(id):
     if not allocation:
         db.session.rollback()
         return {'error': f'Allocation not found with id {id}.'}, 404
+    
     else:
         db.session.delete(allocation)
         db.session.commit()

@@ -13,8 +13,8 @@ class User(db.Model):
     is_position_level = db.Column(db.Boolean, nullable=False, default=False)
     is_crud_access = db.Column(db.Boolean, nullable=False, default=False)
     is_crud_admin = db.Column(db.Boolean, nullable=False, default=False)
-    employment_start_date = db.Column(db.DateTime, nullable=False)
-    employment_end_date = db.Column(db.DateTime, nullable=True) # TODO back populate LicenseAllocation table
+    employment_start_date = db.Column(db.Date, nullable=False)
+    employment_end_date = db.Column(db.Date, nullable=True) # TODO back populate LicenseAllocation table
 
     # at model level    
     allocation = db.relationship('Allocation', back_populates='user')

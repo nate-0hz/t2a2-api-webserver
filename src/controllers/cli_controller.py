@@ -5,7 +5,6 @@ from models.application import Application
 from models.license import License
 from models.allocation import Allocation
 from datetime import date
-import json
 
 db_commands = Blueprint('db', __name__)
 
@@ -22,44 +21,42 @@ def drop_db():
 @db_commands.cli.command('seed')
 def seed_db():
     user1 = User(
-        name="Seed1 Admin",
+        name="Admin User",
         email="admin@email.com",
         password=bcrypt.generate_password_hash('admin123').decode('utf-8'),
         is_position_level=True,
         is_crud_access=True,
         is_crud_admin=True,
-        employment_start_date='13/01/1990'
+        employment_start_date=date(1990, 1, 13)
     )
     
     user2 = User(
-        name="Seed2 User",
-        email="userB@email.com",
+        name="CRUD User",
+        email="cuser@email.com",
         password=bcrypt.generate_password_hash('user123').decode('utf-8'),
         is_position_level=True,
         is_crud_access=True,
         is_crud_admin=False,
-        employment_start_date='13/01/2001',
-        employment_end_date='31/12/2999'
+        employment_start_date=date(2001, 1, 13)
     )
     user3 = User(
-        name="Seed3 Admin",
-        email="userC@email.com",
+        name="NonCRUD User1",
+        email="ncuser1@email.com",
         password=bcrypt.generate_password_hash('user123').decode('utf-8'),
         is_position_level=True,
         is_crud_access=False,
         is_crud_admin=False,
-        employment_start_date='13/01/1990',
-        employment_end_date='31/12/2999'
+        employment_start_date=date(2010, 6, 12),
+        employment_end_date=date(2022, 10, 23)
     )
     user4 = User(
-        name="Seed4 Admin",
-        email="userD@email.com",
+        name="NonCRUD User2",
+        email="ncuser2@email.com",
         password=bcrypt.generate_password_hash('user123').decode('utf-8'),
         is_position_level=False,
         is_crud_access=False,
         is_crud_admin=False,
-        employment_start_date='13/01/1990',
-        employment_end_date='31/12/2999'
+        employment_start_date=date(2021, 10, 1)
     )
 
     db.session.add_all([user1, user2, user3, user4])
@@ -109,20 +106,57 @@ def seed_db():
         monthly_cost=34.95,
         total_purchased=15
     )
+    license4 = License(
+        name="Adobe-Creative-Cloud",
+        description="Adobe Creative Cloud License",
+        is_position_level_restricted=True,
+        application_id=application2.id,
+        monthly_cost=78.95,
+        total_purchased=15
+    )
+    license5 = License(
+        name="Sales-Force-Standard",
+        description="Standard Salesforce license for Sales and Service Teams",
+        is_position_level_restricted=True,
+        application_id=application3.id,
+        monthly_cost=44.95,
+        total_purchased=15
+    )
+    
 
-    db.session.add_all([license1, license2, license3])
+    db.session.add_all([license1, license2, license3, license4, license5])
     db.session.commit()
     print('Licenses table seeded and committed.')
 
     allocation1 = Allocation(
-        license=license1,
-        user=user1
+        user=user1,
+        license=license3,
     )
     allocation2 = Allocation(
+        user=user1,
+        license=license4,
+    )
+    allocation3 = Allocation(
+        user=user1,
+        license=license5,
+    )
+    allocation4 = Allocation(
+        user=user2,
+        license=license3,
+    )
+    allocation5 = Allocation(
+        user=user2,
+        license=license4,
+    )
+    allocation6 = Allocation(
+        user=user3,
         license=license1,
-        user=user2
+    )
+    allocation7 = Allocation(
+        user=user4,
+        license=license1,
     )
 
-    db.session.add_all([allocation1, allocation2])
+    db.session.add_all([allocation1, allocation2, allocation3, allocation4, allocation5, allocation6, allocation7])
     db.session.commit()
     print('allocations table seeded and committed.')
