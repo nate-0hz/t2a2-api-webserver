@@ -7,6 +7,7 @@ from models.license import License
 from controllers.auth_controller import authorise_as_access
 from sqlalchemy.exc import IntegrityError
 from psycopg2 import errorcodes
+from datetime import date
 
 # Create allocation Blueprint
 allocation_bp = Blueprint('allocation', __name__, url_prefix='/allocation')
@@ -63,6 +64,25 @@ def get_single_user_allocation(id):
         # Where user with specifid id is not found, the error is handled with useful information
         return {'error': f'No user found with id {id}'}, 404
 
+
+# Endpoint delete one license allocation using allocation id
+@allocation_bp.route('/<int:id>', methods=['DELETE'])
+@jwt_required()
+@authorise_as_access
+def delete_license_allocation(id):
+    stmt = db.select(Allocation).filter_by(id=id)
+    allocation = db.session.scalar(stmt)
+
+    if not allocation:
+        db.session.rollback()
+        return {'error': f'Allocation not found with id {id}.'}, 404
+    
+    else:
+        db.session.delete(allocation)
+        db.session.commit()
+        return {'message': f'Allocation with id {id} for license id {allocation.license_id} for user id {allocation.user_id} deleted successfully .'}
+
+
 # Endpoint get allocations for specific license type - CRUD access restricted
 @allocation_bp.route('/license/<int:id>', methods=['GET']) ## TODO Test: Returns result where no allocation
 @jwt_required()
@@ -81,12 +101,12 @@ def get_single_license_allocation(id):
         # Where the license exists and has been allocated to at least one user, enough information to identify the license is \
         # returned, along with a list of users who have the license allocated, and the sum of the total monthly cost of that type
         else:
-            license_allocation_dict = []
+            license_allocation_list = []
             total_monthly_cost = 0
             for allocation in allocations:
                 user = allocation.user
                 license = allocation.license
-                license_allocation_dict.append({
+                license_allocation_list.append({
                     'user_id': allocation.user_id,
                     'user_name': user.name,
                     'monthly_cost': license.monthly_cost
@@ -95,7 +115,7 @@ def get_single_license_allocation(id):
             return {
                 'license_id': license.id,
                 'license_name': license.name,
-                'users': license_allocation_dict,
+                'users': license_allocation_list,
                 'total_monthly_cost': total_monthly_cost
             }
     except:
@@ -138,19 +158,48 @@ def new_license_allocation():
             db.session.rollback()
             column_name = err.orig.diag.column_name
             return { 'error': f'Unable to add allocation - {column_name} is required' }, 409
+        
 
-@allocation_bp.route('/<int:id>', methods=['DELETE'])
+# Endpoint: show licenses allocations where users have had employment terminated
+@allocation_bp.route('/expired', methods=['GET'])
 @jwt_required()
 @authorise_as_access
-def delete_license_allocation(id):
-    stmt = db.select(Allocation).filter_by(id=id)
-    allocation = db.session.scalar(stmt)
+def expired_allocation():
+        today = date.today()
+        stmt = db.Select(Allocation).order_by(Allocation.id.desc())
+        allocations = list(db.session.scalars(stmt))
 
-    if not allocation:
-        db.session.rollback()
-        return {'error': f'Allocation not found with id {id}.'}, 404
-    
-    else:
-        db.session.delete(allocation)
-        db.session.commit()
-        return {'message': f'Allocation with id {id} for license id {allocation.license_id} for user id {allocation.user_id} deleted successfully .'}
+        # Where no license allocations have been made, the API returns this statement
+        if not allocations:
+            return {'error': 'No license allocations found.'}, 404
+        # Where license allocations exist, this block adds the details of the terminated user and allocated license to a list
+        else:
+            # creates and empty list to hold details of licnese allocations for terminated users
+            expired_allocation_list = []
+            total_monthly_cost = 0
+            # iterates over the allocated licenses and adds details where expired license allocations found
+            for allocation in allocations:
+                user = allocation.user
+                license = allocation.license
+                if user.employment_end_date <= today:
+                    expired_allocation_list.append({
+                        'allocation_id': allocation.id,
+                        'user_id': allocation.user_id,
+                        'user_name': user.name,
+                        'monthly_cost': license.monthly_cost,
+                        'employment_end_date': user.employment_end_date
+                    })
+                    # sums monthly cost of licneses allocated to terminated users
+                    total_monthly_cost += license.monthly_cost
+
+            # If no items in list, returns statments that no expired license allocations exist
+            if not expired_allocation_list:
+                return {'message': f'No expired license allocations found.'}, 404
+            else:
+                return {
+                    'allocation_id': allocation.id,
+                    'license_id': license.id,
+                    'license_name': license.name,
+                    'users': expired_allocation_list,
+                    'total_monthly_cost': total_monthly_cost
+                }
