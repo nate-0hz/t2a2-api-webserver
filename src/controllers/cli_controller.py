@@ -24,7 +24,6 @@ def seed_db():
         name="Admin User",
         email="admin@email.com",
         password=bcrypt.generate_password_hash('admin123').decode('utf-8'),
-        is_position_level=True,
         is_crud_access=True,
         is_crud_admin=True,
         employment_start_date=date(1990, 1, 13)
@@ -34,7 +33,6 @@ def seed_db():
         name="CRUD User",
         email="cuser@email.com",
         password=bcrypt.generate_password_hash('user123').decode('utf-8'),
-        is_position_level=True,
         is_crud_access=True,
         is_crud_admin=False,
         employment_start_date=date(2001, 1, 13)
@@ -43,7 +41,6 @@ def seed_db():
         name="NonCRUD User1",
         email="ncuser1@email.com",
         password=bcrypt.generate_password_hash('user123').decode('utf-8'),
-        is_position_level=True,
         is_crud_access=False,
         is_crud_admin=False,
         employment_start_date=date(2010, 6, 12),
@@ -53,7 +50,6 @@ def seed_db():
         name="NonCRUD User2",
         email="ncuser2@email.com",
         password=bcrypt.generate_password_hash('user123').decode('utf-8'),
-        is_position_level=False,
         is_crud_access=False,
         is_crud_admin=False,
         employment_start_date=date(2021, 10, 1)
@@ -85,7 +81,6 @@ def seed_db():
     license1 = License(
         name="M365-F3",
         description="Microsoft M365 F3 license",
-        is_position_level_restricted = False,
         application_id=application1.id,
         monthly_cost=9.95,
         total_purchased=10
@@ -93,7 +88,6 @@ def seed_db():
     license2 = License(
         name="M365-E3",
         description="Microsoft M365 E3 license",
-        is_position_level_restricted=False,
         application_id=application1.id,
         monthly_cost=25.95,
         total_purchased=50
@@ -101,7 +95,6 @@ def seed_db():
     license3 = License(
         name="M365-E5",
         description="Microsoft M365 E5 license",
-        is_position_level_restricted=True,
         application_id=application1.id,
         monthly_cost=34.95,
         total_purchased=15
@@ -109,7 +102,6 @@ def seed_db():
     license4 = License(
         name="Adobe-Creative-Cloud",
         description="Adobe Creative Cloud License",
-        is_position_level_restricted=True,
         application_id=application2.id,
         monthly_cost=78.95,
         total_purchased=15
@@ -117,7 +109,6 @@ def seed_db():
     license5 = License(
         name="Sales-Force-Standard",
         description="Standard Salesforce license for Sales and Service Teams",
-        is_position_level_restricted=True,
         application_id=application3.id,
         monthly_cost=44.95,
         total_purchased=15

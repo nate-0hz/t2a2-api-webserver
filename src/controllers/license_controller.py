@@ -3,6 +3,7 @@ from init import db
 from flask_jwt_extended import jwt_required
 from models.license import License, licenses_schema, license_schema
 from models.application import Application
+from models.allocation import Allocation
 from controllers.auth_controller import authorise_as_admin, authorise_as_access
 
 
@@ -40,15 +41,19 @@ def get_single_license(id):
 @license_bp.route('/<int:id>', methods=['DELETE'])
 @jwt_required()
 @authorise_as_admin
-def delete_one_app(id):
+def delete_one_license(id):
     # Queries the database for the specified license_id, returning the license attributes in a scalar
     stmt = db.select(License).filter_by(id=id)
     license = db.session.scalar(stmt)
     if license:
-        # deletes the specified license and commits the change to the database
-        db.session.delete(license)
-        db.session.commit()
-        return {'message': f'License id: {license.id} with name: "{license.name}" deleted successfully.'}
+        allocations = Allocation.query.filter_by(license_id=id).all()
+        if allocations:
+            return {'error': f'Cannot delete license \'{license.name}\' with id {id} as it currently allcoated to at least one user.'}, 400
+        else:
+            # deletes the specified license and commits the change to the database
+            db.session.delete(license)
+            db.session.commit()
+            return {'message': f'License id: {license.id} with name: {license.name} deleted successfully.'}
     else:
         return {'error': f'License not found with id {id}.'}, 404
 
@@ -70,10 +75,9 @@ def add_license():
     license = License(
         name=body_data.get('name'),
         description=body_data.get('description'),
-        is_position_level_restricted=body_data.get('is_position_level_restricted'),
         monthly_cost=body_data.get('monthly_cost'),
         total_purchased=body_data.get('total_purchased'),
-        application=application
+        application_id=body_data.get('application_id'),
     )
     # adds and commits the new licenses to the database and returns the details for user confirmation
     db.session.add(license)

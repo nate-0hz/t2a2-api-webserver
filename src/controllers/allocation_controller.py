@@ -6,6 +6,7 @@ from models.user import User
 from models.license import License
 from controllers.auth_controller import authorise_as_access
 from sqlalchemy.exc import IntegrityError
+from marshmallow import ValidationError
 from psycopg2 import errorcodes
 from datetime import date
 
@@ -131,6 +132,16 @@ def new_license_allocation():
     try:
         body_data = allocation_schema.load(request.get_json())
 
+        # Checks if user_id exists in users table
+        user = User.query.get(body_data.get('user_id'))
+        if not user:
+            return {'error': f'User with ID {body_data.get("user_id")} not found.'}, 404
+        
+        # Checks if license_id exists in licenses table
+        license = License.query.get(body_data.get('license_id'))
+        if not license:
+            return {'error': f'License with ID {body_data.get("license_id")} not found.'}, 404
+        
         # Checks if license_id and user_id combination exists in allocations table
         existing_allocation = Allocation.query.filter_by(
             license_id=body_data.get('license_id'),
@@ -152,13 +163,10 @@ def new_license_allocation():
 
         return allocation_schema.dump(allocation), 201
 
-    except IntegrityError as err:
-        # handles error if not nullable field is null
-        if err.orig.pgcode == errorcodes.NOT_NULL_VIOLATION:
-            db.session.rollback()
-            column_name = err.orig.diag.column_name
-            return { 'error': f'Unable to add allocation - {column_name} is required' }, 409
-        
+    except ValidationError as err:
+        # handles error if request data is invalid
+        return {'error': err.messages}, 400
+
 
 # Endpoint: show licenses allocations where users have had employment terminated
 @allocation_bp.route('/expired', methods=['GET'])
@@ -181,13 +189,15 @@ def expired_allocation():
             for allocation in allocations:
                 user = allocation.user
                 license = allocation.license
-                if user.employment_end_date <= today:
+                if user.employment_end_date is not None and user.employment_end_date <= today:
                     expired_allocation_list.append({
                         'allocation_id': allocation.id,
                         'user_id': allocation.user_id,
                         'user_name': user.name,
+                        'license_id': allocation.license.id,
+                        'license_name': license.name,
                         'monthly_cost': license.monthly_cost,
-                        'employment_end_date': user.employment_end_date
+                        'employment_end_date': user.employment_end_date.strftime('%Y-%m-%d')
                     })
                     # sums monthly cost of licneses allocated to terminated users
                     total_monthly_cost += license.monthly_cost
@@ -196,10 +206,34 @@ def expired_allocation():
             if not expired_allocation_list:
                 return {'message': f'No expired license allocations found.'}, 404
             else:
+                # Group the expired allocations by user ID
+                expired_allocations_by_user = {}
+                for allocation in expired_allocation_list:
+                    user_id = allocation['user_id']
+                    if user_id not in expired_allocations_by_user:
+                        expired_allocations_by_user[user_id] = {
+                            'user_name': allocation['user_name'],
+                            'licenses': []
+                    }
+                        
+                    expired_allocations_by_user[user_id]['licenses'].append({
+                        'allocation_id': allocation['allocation_id'],
+                        'license_id': allocation['license_id'],
+                        'license_name': allocation['license_name'],
+                        'monthly_cost': allocation['monthly_cost'],
+                        'employment_end_date': allocation['employment_end_date']
+                    })
+
+                # Create a list of expired allocations for each user
+                expired_allocation_lists = []
+                for user_id, user_data in expired_allocations_by_user.items():
+                    expired_allocation_lists.append({
+                        'user_id': user_id,
+                        'user_name': user_data['user_name'],
+                        'licenses': user_data['licenses']
+                    })
+
                 return {
-                    'allocation_id': allocation.id,
-                    'license_id': license.id,
-                    'license_name': license.name,
-                    'users': expired_allocation_list,
+                    'expired_allocations': expired_allocation_lists,
                     'total_monthly_cost': total_monthly_cost
                 }

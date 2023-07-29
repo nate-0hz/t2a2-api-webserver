@@ -50,13 +50,15 @@ def auth_register():
         # optional field is employment_end date
         # default fields should not be required to register, as defaults should populate.
         body_data = request.get_json()
-        # in the model, create a new User instance from the user info provided in the POST request
+
+        if not body_data.get('name') or body_data.get('email') or body_data.get('password') or  body_data.get('employment_start_date'):
+            return {'error': 'Name, email, password and employment start date are required'}, 400
+        
         user = User()
         user.name = body_data.get('name')
         user.email = body_data.get('email')
         if body_data.get('password'):
             user.password = bcrypt.generate_password_hash(body_data.get('password')).decode('utf-8')
-        user.is_position_level = body_data.get('is_position_level')
         user.is_crud_access = body_data.get('is_crud_access')
         user.is_crud_admin = body_data.get('is_crud_admin')
         user.employment_start_date = body_data.get('employment_start_date')

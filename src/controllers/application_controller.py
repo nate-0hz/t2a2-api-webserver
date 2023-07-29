@@ -3,9 +3,7 @@ from init import db
 from flask_jwt_extended import jwt_required
 from models.application import Application, applications_schema, application_schema
 from models.license import License
-from controllers.auth_controller import authorise_as_admin
-from sqlalchemy.exc import IntegrityError
-from psycopg2 import errorcodes
+from controllers.auth_controller import authorise_as_admin, authorise_as_access
 
 
 # Creating application Blueprint
@@ -15,6 +13,7 @@ application_bp = Blueprint('application', __name__, url_prefix='/application')
 # Endpoint: get all apps - any registered user can access
 @application_bp.route('/', methods=['GET'])
 @jwt_required()
+@authorise_as_access
 def get_all_apps():
     stmt = db.Select(Application).order_by(Application.id.desc())
     applications = db.session.scalars(stmt)
@@ -24,6 +23,7 @@ def get_all_apps():
 # Endpoint: get single app with ID - any registered user can access
 @application_bp.route('/<int:id>', methods=['GET'])
 @jwt_required()
+@authorise_as_access
 def get_single_app(id):
     stmt = db.Select(Application).filter_by(id=id)
     application = db.session.scalar(stmt)
@@ -39,25 +39,22 @@ def get_single_app(id):
 @jwt_required()
 @authorise_as_admin
 def add_app():
-    try:
-        body_data = application_schema.load(request.get_json())
+    body_data = application_schema.load(request.get_json())
 
-        application = Application(
-            name = body_data.get('name'),
-            description = body_data.get('description'),
-            isActive = body_data.get('isActive')
-        )
+    # Check for null non-nullable fields
+    if not body_data.get('name'):
+        return {'error': 'Application name is required'}, 400
 
-        db.session.add(application)
-        db.session.commit()
-        return application_schema.dump(application), 201
+    application = Application(
+        name=body_data.get('name'),
+        description=body_data.get('description'),
+        isActive=body_data.get('isActive')
+    )
 
-    except IntegrityError as err:
-        # handles error if not nullable field is null
-        if err.orig.pgcode == errorcodes.NOT_NULL_VIOLATION:
-            db.session.rollback()
-            column_name = err.orig.diag.column_name
-            return { 'error': f'Unable to add application - {column_name} is required' }, 409
+    db.session.add(application)
+    db.session.commit()
+    return application_schema.dump(application), 201
+
 
 # Endpoint: edit an app - admin restricted
 @application_bp.route('/<int:id>', methods=['PUT', 'PATCH'])

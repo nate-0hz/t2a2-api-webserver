@@ -10,7 +10,6 @@ class User(db.Model):
     name = db.Column(db.String, nullable=False)
     email = db.Column(db.String, nullable=False, unique=True)
     password = db.Column(db.String, nullable=False)
-    is_position_level = db.Column(db.Boolean, nullable=False, default=False)
     is_crud_access = db.Column(db.Boolean, nullable=False, default=False)
     is_crud_admin = db.Column(db.Boolean, nullable=False, default=False)
     employment_start_date = db.Column(db.Date, nullable=False)
@@ -23,7 +22,7 @@ class UserSchema(ma.Schema):
     allocation = fields.List(fields.Nested('AllocationSchema', exclude=['users']))
 
     class Meta:
-        fields = ('id', 'name', 'email', 'is_position_level', 'is_crud_access', 'is_crud_admin', 'employment_start_date', 'employment_end_date')
+        fields = ('id', 'name', 'email', 'is_crud_access', 'is_crud_admin', 'employment_start_date', 'employment_end_date')
 
     @validates('email')
     def validate_email(self, email):
