@@ -3,6 +3,7 @@
 | # | Index |
 |----|----|
 | .0 | Important Links |
+| .1 | Installation and setup |
 | R1 | Identification of the problem you are trying to solve by building this particular app |
 | R2| Why is it a problem that needs solving? |
 | R3 | Why have you chosen this database system. What are the drawbacks compared to others? |
@@ -16,9 +17,101 @@
 
 ## .0 Important Links
 
-[Github Repo]()
+[Github Repo](https://github.com/nate-0hz/t2a2-api-webserver)
 
-[Trello Board]()
+[Trello Board](https://trello.com/b/g2Opst0X/nate-picone-t2a2-a-crud-app)
+
+## .1 Installation and setup
+
+### Requirements
+
+1. Python 3 installed and updated to 3.11.4 (Tested on Homebrew, MacOS)
+
+2. PostgreSQL installed and updated to version 15.3 (Tested on Homebrew, MacOS)
+
+3. This repository - a clone or download of this repository.
+
+4. An installed API platform, such as Postman or Insomnia.
+
+### PostgreSQL
+
+1. Log into your PSQL instance from your shell, and create a user `license_dev` with password and ability to log in. 
+
+2. Create a new database `license_db`
+
+3. Grant the user `license_dev` all privellages on the database
+
+4. Change to the user and connect to the database
+
+### Environment setup
+
+1. In your shell, navigate to the parent directory of the application. If you saved it to `~/gitapps`, change to this directory.
+
+2. From the terminal create a virtual environment with `python3 -m venv .venv`. Python3 is required for MacOS. Please check for your OS.
+
+3. Activate the virtual environment from the terminal with `source .venv/bin/activate`
+
+4. Install the requirements from requirements.txt file with: `pip3 -r install requirements.txt`. This will install the required packages and libraries.
+
+5. In the terminal, navigate to `/src`.
+
+6. Open `.flaskenv` in your terminal text editor and check the variables. `FLASK_APP` sets the primary .py file to use as the application and should not need changing. `FLASK_DEBUG` keeps the localhost server running and it is recommended to leave this. `FLASK_RUN_PORT` sets the port for the server. It is set to 8083 by default. Change this is there is a conflict, but the port set here is the port required for your API platform. Save and exit.
+
+7. In the terminal, copy `.envsample` to `.env` in the same directory.
+
+8. Open `.env` in your terminal text editor  
+
+9. To the end of `DATABASE_URL=` add `"postgresql+psycopg2://license_dev:[PASSWORD]@localhost:5432/license_db"` Where:
+
+    - `license_dev` is the name of the user you created in postgres
+    - `[PASSWORD]` is the password you set for the user
+    - `localhost` is the name of the server
+    - `5432` is the default password used for the connection between psycopg2 and postgres
+    - `license_db` is the database you created in your database
+
+10. To the end of `JWT_SECRET_KEY=`, add a randomly generated secret key. For best results, use randomly generatedupper and lower case letters, and numbers of 40 characters length.
+
+11. Save and exit.
+
+### Database table set up
+
+1. From the `/src` directory within the parent of the application.
+
+2. In the terminal, enter `flask db drop`, to ensure there are no tables remaining from preinstalled attempts. If successful, you should receive the message `Tables dropped.` This can be repeated, if you need to remove the tables from the database at a later time, for some reason.
+
+3. To create the tables, enter `flask db create`. This will create the table structure required for the application. If successfult, you will receive the message `Tables created.`
+
+4. To seed the tables with test data, enter `flask db seed.` If successful, you will receive the following responses, indicating all four tables have been seeded:
+
+``` zsh
+Users table seeded and committed.
+Applications table seeded and committed.
+Licenses table seeded and committed.
+allocations table seeded and committed.
+```
+
+5. To run the server, enter `flask run`. You will receive some dialogue in the terminal indicating the server is running:
+
+``` zsh
+ * Serving Flask app 'main'
+ * Debug mode: on
+WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on http://127.0.0.1:8083
+Press CTRL+C to quit
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: [PIN number shown]
+ ```
+
+> Note: I find this dialogue helpful as it reminds me I have a server running with an open port, but if it is bothersome for you, you can turn off debugging mode by editing the `FLASK_DEBUG=1` value to 0 in `.flaskenv`
+
+6. Open your API platform of choice. My preference is Postman.
+
+7. In the url field, if you have kept the defaults, enter localhost:8083/ followed by the route and required verb needed. More details on these routes can be found in the endpoint documentation, below.
+
+8. To quit the server, return to your terminal and press ctrl-C
+
+---
 
 ## R1 Identification of the problem you are trying to solve by building this particular app
 
@@ -131,7 +224,19 @@ Example JSON request body:
 
 This route validates the input and will return an error is a non-nullable field does not contain a value, or if the requirement for a unique email address has not been met.
 
-On successful posting, the user will receive a response containing a dump of the data submitted.
+On successful posting, the user will receive a response containing a dump of the data submitted, eg:
+
+``` python
+{
+    "email": "name@email.com",
+    "employment_end_date": null,
+    "employment_start_date": "2022-01-11",
+    "id": 5,
+    "is_crud_access": true,
+    "is_crud_admin": false,
+    "name": "Blah Blah"
+}
+```
 
 Where any non-nullable fields have no value, the API will respond with an error message advising one of the required fields are missing:
 
@@ -140,7 +245,6 @@ Where any non-nullable fields have no value, the API will respond with an error 
     "error": "Name, email, password and employment start date are required"
 }
 ```
-
 ### /auth/login (POST)
 
 Endpoint used to authorise user access to the application. Successful login will return a bearer token that can be used to access other endpoints, using Postman, Insomnia or other API platforms.
@@ -247,6 +351,28 @@ Where a user is not found with the specified id, the API will return an error me
 ``` JSON
 {
     "error": "User with id 7 not found."
+}
+```
+
+### /user/\<id\> (DELETE)
+
+Endpoint used to delete a single user.
+
+No JSON body is required to delete the user, but the user ID is required int he path, a bearer token from authentication access, and that the user satisfies the `@authorise_as_access` requirements.
+
+Where the user is successfully deleted, the API will return a confirmation message showing the user name and ID number:
+
+``` python
+{
+    "message": "User 'NonCRUD User2' with id 4 deleted successfully."
+}
+```
+
+Where no user is found with that ID, the API will return an error message:
+
+``` python
+{
+    "error": "User not found with id 4."
 }
 ```
 
@@ -848,6 +974,12 @@ Where no licenses are allocated to termianted users, the API returns that as a m
 
 ![Application ERD](./docs/img/SaaS-LIcense-CRUD-v1.png)
 
+The database design consists of four tables, with normalised data. Data requiring calculation has this completed in the model and retruned to the client via the controller, so as not to store calculated data within the table.
+
+There is no duplication of data on the table.
+
+For further detail on how the models and tables relate to each other, please see the following sections.
+
 ## R7 Detail any third party services that your app will use
 
 ### bcrypt
@@ -910,9 +1042,39 @@ Four models are created in this application:
 
 The Primary Key of the User model (id) forms a Foreign Key in the Allocation model, and changes in this model backpopulate the "user" variable in the Allocation schema. A user deletion will result in the cascading deletion of license allocations to the user.
 
+``` python
+class User(db.Model):
+    __tablename__= 'users'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String, nullable=False)
+    email = db.Column(db.String, nullable=False, unique=True)
+    password = db.Column(db.String, nullable=False)
+    is_crud_access = db.Column(db.Boolean, nullable=False, default=False)
+    is_crud_admin = db.Column(db.Boolean, nullable=False, default=False)
+    employment_start_date = db.Column(db.Date, nullable=False)
+    employment_end_date = db.Column(db.Date, nullable=True) # TODO back populate LicenseAllocation table
+
+    # at model level    
+    allocation = db.relationship('Allocation', back_populates='user', cascade='all, delete')
+```
+
 ### Application Model
 
 The Primary Key of the Application model (id) forms a Foreign Key in the Licenses model, and changes in this model backpopulate the "application" variable in the License model. An application deletion will result in the cascading deletion of the license type, however safeguards have been introduced to prevent the removal of an application if licenses have been associated with it.
+
+``` python
+class Application(db.Model):
+    __tablename__='applications'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String, nullable=False)
+    description = db.Column(db.String)
+    isActive = db.Column(db.Boolean, default=True)
+
+    # at the model level
+    licenses = db.relationship('License', back_populates='application', cascade='all, delete')
+```
 
 ### License Model
 
@@ -920,9 +1082,41 @@ The Primary Key of the License model (id) forms a Foreign Key in the Allocation 
 
 The License model contains an application_id variable, with Foreign Key constraints from the Application model.
 
+``` python
+class License(db.Model):
+    __tablename__='licenses'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String, nullable=False)
+    description = db.Column(db.String)
+    monthly_cost = db.Column(db.Numeric(precision=6, scale=2), nullable=False)
+    total_purchased = db.Column(db.Integer)
+    # FK
+    application_id = db.Column(db.Integer, db.ForeignKey('applications.id'), nullable=False)
+
+    # at model level
+    application = db.relationship('Application', back_populates='licenses')
+    allocation = db.relationship('Allocation', back_populates='license', cascade='all, delete')
+
+```
+
 ### Allocation Model
 
 The Allocation model has two Froeign Key constraints from the Primary Keys of User and License models.
+
+``` python
+class Allocation(db.Model):
+    __tablename__= 'allocations'
+
+    id = db.Column(db.Integer, primary_key=True)
+    # FK
+    license_id = db.Column(db.Integer, db.ForeignKey('licenses.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+   
+    # model level
+    license = db.relationship('License', back_populates='allocation', cascade='all, delete')
+    user = db.relationship('User', back_populates='allocation')
+```
 
 ### Other relationships between the data
 
@@ -938,13 +1132,40 @@ Allocated licenses, license cost, and application data is used in the /allocatio
 
 The Primary Key of the users table (id) forms a Foreign Key contstraint in the allocations table (user_id), with a respective no-or-one-to-many relationship, where one user can be allocated between zero and multiple licenses.
 
+The data stored in this table include:
+
+- id - the employee's ID (Primary Key, unique and not nullable), with unique constraint and used as foreign key constraint in table allocations
+- name - the employee's name (not nullable)
+- email - the employee's email address, (not nullable) with a unique key constraint
+- password - saved in the table as hash (not nullable)
+- is_crud_access - a boolean value to indicate whether the user has access to this application (not nullable and default value of False). Used for the `@validate_as_access` decorator
+- is_crud_admin - a boolean value to indicate whether the user has elevated access within this application (not nullable and default value of False). Used for the `@validate_as_admin` decorator
+- employment_start_date - Date value in the format of yyyy-mm-dd, indicating the employee's start date (not nullable)
+- employe_end_date - Date value in the format of yyyy-mm-dd, indicating the employee's end date (nullable)
+
 ### Applications Table
 
 The applications table holds simple information about the applications used by the organisation. The Primary Key of the applications table (id) forms a Foreign Key in the licenses table, with a no-or-one-to-many relationship, where one application can have between zero and multiple licenses. A good example of this is provided in the seed data, where the Microsoft M365 platform has multiple license types available, with different access and costs.
 
+Data stored in this table include:
+
+- id - the application ID (Primary Key, unique and not nullable), used as foreign key constraint in the table licenses
+- name - application name (not nullable)
+- description - application description (nullable)
+- isActive - Boolean value to indicate whether the application is actively being used by the organisation (not nullable, default value of True). An application can be marked False prior to be deleted, should the organisation need to keep a record prior to deletion.
+
 ### Licenses Table
 
 The licenses table holds information about the licenses available for the applications. The Primary Key of the licenses table (id) forms a secondary key in the allocations table. This forms a no-or-one-to-many relationship between applications and licenses (with zero-to-one application to zero-to-many licenses), and the same with the allocations table (with zero-to-one license to zero-to-many allocations).
+
+Data stored in this table include:
+
+- id - the license ID (Primary Key, unique and non nullable), used as foreign key constraint in the allocations table
+- name - the name of the license (not nullable)
+- description - a description of the license (nullable)
+- monthly_cost - a numberic field with precision of 6 and scale of 2, used for the monthly cost of the each license unit (not nullable)
+- total purchased - integer (nullable) for the number of licenses held
+- application_id - foreign key constraint from applications table
 
 ### Allocations Table
 
@@ -954,6 +1175,11 @@ Some integrity checking takes place in this model to prevent the same user/licen
 
 A future enhancement here would be further limitations, preventing licenses from the same application being allocated to the same user.
 
+Data stored in this table include:
+
+- id - the allocation ID (Primary Key, unique and not nullable)
+- license_id - foreign key constraint from licenses table
+- user_id - foreign key constraint from users table
 
 ## R10 Describe the way tasks are allocated and tracked in your project
 
