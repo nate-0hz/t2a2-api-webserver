@@ -10,8 +10,6 @@ from controllers.auth_controller import authorise_as_admin, authorise_as_access
 # Create license Blueprint
 license_bp = Blueprint('license', __name__, url_prefix='/license')
 
-### TODO Add decorator auth as admin
-
 # Endpoint: get all licenses - CRUD access restricted
 @license_bp.route('/', methods=['GET'])
 @jwt_required()

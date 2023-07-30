@@ -8,16 +8,22 @@ from datetime import date
 
 db_commands = Blueprint('db', __name__)
 
+
+# CLI command `flask db create`
 @db_commands.cli.command('create')
 def create_db():
     db.create_all()
     print('Tables created.')
 
+
+# CLI command `flask db drop`
 @db_commands.cli.command('drop')
 def drop_db():
     db.drop_all()
     print('Tables dropped.')
 
+
+# CLI command `flask db seed`
 @db_commands.cli.command('seed')
 def seed_db():
     user1 = User(
@@ -114,7 +120,6 @@ def seed_db():
         total_purchased=15
     )
     
-
     db.session.add_all([license1, license2, license3, license4, license5])
     db.session.commit()
     print('Licenses table seeded and committed.')

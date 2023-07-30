@@ -6,7 +6,9 @@ from sqlalchemy.exc import IntegrityError
 from psycopg2 import errorcodes
 import functools
 
+# Create auth blueprint
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
+
 
 # Function to authorise admin
 # Performs this by checking if the is_crud_admin attribute in the users table is True
@@ -51,7 +53,8 @@ def auth_register():
         # default fields should not be required to register, as defaults should populate.
         body_data = request.get_json()
 
-        if not body_data.get('name') or body_data.get('email') or body_data.get('password') or  body_data.get('employment_start_date'):
+        # Checks if required fields have been provided. If not, returns an error message.
+        if not body_data.get('name') or not body_data.get('email') or not body_data.get('password') or not body_data.get('employment_start_date'):
             return {'error': 'Name, email, password and employment start date are required'}, 400
         
         user = User()

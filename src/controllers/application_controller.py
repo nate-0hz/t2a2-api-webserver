@@ -28,6 +28,7 @@ def get_single_app(id):
     stmt = db.Select(Application).filter_by(id=id)
     application = db.session.scalar(stmt)
     
+    # returns the requested application if found, otherwise returns error that application not found
     if application:
         return application_schema.dump(application)
     else:
@@ -41,7 +42,7 @@ def get_single_app(id):
 def add_app():
     body_data = application_schema.load(request.get_json())
 
-    # Check for null non-nullable fields
+    # Check for null non-nullable field
     if not body_data.get('name'):
         return {'error': 'Application name is required'}, 400
 
@@ -65,6 +66,7 @@ def update_single_app(id):
     stmt = db.select(Application).filter_by(id=id)
     application = db.session.scalar(stmt)
 
+    # Checks if application ID in path exists and returns it, otherwise returns error adivising appliaction now found
     if application:
         application.name = body_data.get('name') or application.name
         application.description = body_data.get('description') or application.description
@@ -85,6 +87,7 @@ def delete_application(id):
     stmt = db.select(Application).filter_by(id=id)
     application = db.session.scalar(stmt)
 
+    # Checks if application exists and returns the details if true, otherwise returns an error that application not found.
     if application:
         licenses = License.query.filter_by(application_id=id).all()
         # Validates is license types have been associatesd with application and if so, prevents application removal

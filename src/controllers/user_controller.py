@@ -4,6 +4,7 @@ from flask_jwt_extended import jwt_required
 from models.user import User, user_schema, users_schema
 from controllers.auth_controller import authorise_as_access
 
+# Create user blueprint
 user_bp = Blueprint('user', __name__, url_prefix='/user')
 
 
@@ -27,11 +28,12 @@ def get_single_user(id):
     stmt = db.Select(User).filter_by(id=id)
     user = db.session.scalar(stmt)
     if user:
-        # Where the user exists, returns a dictionary of all users
+        # Where the user exists, returns a dictionary of all users, else returns error that user not found
         return user_schema.dump(user)
     else:
         return {'error': f'User with id {id} not found.'}, 404
-    
+
+
 # Endpoint to delete a single user - CRUD access restricted
 @user_bp.route('<int:id>', methods=['DELETE'])
 @jwt_required()
