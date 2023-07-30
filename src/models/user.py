@@ -16,7 +16,7 @@ class User(db.Model):
     employment_end_date = db.Column(db.Date, nullable=True) # TODO back populate LicenseAllocation table
 
     # at model level    
-    allocation = db.relationship('Allocation', back_populates='user')
+    allocation = db.relationship('Allocation', back_populates='user', cascade='all, delete')
 
 class UserSchema(ma.Schema):
     allocation = fields.List(fields.Nested('AllocationSchema', exclude=['users']))
