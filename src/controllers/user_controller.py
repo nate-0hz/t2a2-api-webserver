@@ -1,4 +1,4 @@
-from flask import Blueprint, request
+from flask import Blueprint
 from init import db
 from flask_jwt_extended import jwt_required
 from models.user import User, user_schema, users_schema
@@ -36,6 +36,14 @@ def get_single_user(id):
 @user_bp.route('<int:id>', methods=['DELETE'])
 @jwt_required()
 @authorise_as_access
-def delete_user():
+def delete_user(id):
     # Queries the database and retreives user details
-    pass
+    stmt = db.select(User).filter_by(id=id)
+    user = db.session.scalar(stmt)
+
+    if user:
+        db.session.delete(user)
+        db.session.commit()
+        return {'message': f'User \'{user.name}\' with id {id} deleted successfully.'}
+    else:
+        return {'error': f'User not found with id {id}.'}, 404

@@ -1,6 +1,5 @@
 from init import db, ma
 from marshmallow import fields
-from marshmallow.exceptions import ValidationError
 
 class Application(db.Model):
     __tablename__='applications'

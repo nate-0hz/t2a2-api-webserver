@@ -5,15 +5,12 @@ from models.allocation import Allocation, allocations_schema, allocation_schema
 from models.user import User
 from models.license import License
 from controllers.auth_controller import authorise_as_access
-from sqlalchemy.exc import IntegrityError
 from marshmallow import ValidationError
-from psycopg2 import errorcodes
 from datetime import date
 
 # Create allocation Blueprint
 allocation_bp = Blueprint('allocation', __name__, url_prefix='/allocation')
 
-### TODO add decorator auth as admin ??
 
 # Endpoint: get all allocations - CRUD access restricted
 @allocation_bp.route('/', methods=['GET'])
@@ -27,7 +24,7 @@ def get_all_allocations():
 
 
 # Endpoint get allocations for specific user - CRUD access restricted
-@allocation_bp.route('/user/<int:id>', methods=['GET']) ## TODO FIX: Test result where no allocation
+@allocation_bp.route('/user/<int:id>', methods=['GET'])
 @jwt_required()
 @authorise_as_access
 def get_single_user_allocation(id):

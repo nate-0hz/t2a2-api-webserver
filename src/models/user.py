@@ -1,6 +1,6 @@
 from init import db, ma
-from marshmallow import fields, validates
-from marshmallow.exceptions import ValidationError
+from marshmallow import fields
+
 
 
 class User(db.Model):
@@ -24,10 +24,6 @@ class UserSchema(ma.Schema):
     class Meta:
         fields = ('id', 'name', 'email', 'is_crud_access', 'is_crud_admin', 'employment_start_date', 'employment_end_date')
 
-    @validates('email')
-    def validate_email(self, email):
-        if '@' not in email:
-            raise ValidationError('Email address must contain the \'@\' character.')
 
 user_schema = UserSchema()
 users_schema = UserSchema(many=True)
